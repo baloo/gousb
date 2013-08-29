@@ -67,6 +67,31 @@ func (d *Device) Reset() error {
 	return nil
 }
 
+// KernelDriverActive determines if a kernel driver is active on iface
+func (d *Device) KernelDriverActive(iface uint8) (bool, error) {
+  r := C.libusb_kernel_driver_active(d.handle, C.int(iface));
+  if r < 0 {
+    return false, usbError(r)
+  }
+  return r == 1, nil
+}
+
+// DetachKernelDriver detaches a kernel driver from interface iface
+func (d *Device) DetachKernelDriver(iface uint8) error {
+  if errno := C.libusb_detach_kernel_driver(d.handle, C.int(iface)); errno < 0 {
+    return usbError(errno)
+  }
+  return nil
+}
+
+// AttachKernelDriver (re)attaches a previously detached kernel driver to interface iface
+func (d *Device) AttachKernelDriver(iface uint8) error {
+  if errno := C.libusb_attach_kernel_driver(d.handle, C.int(iface)); errno < 0 {
+    return usbError(errno)
+  }
+  return nil
+}
+
 func (d *Device) Control(rType, request uint8, val, idx uint16, data []byte) (int, error) {
 	//log.Printf("control xfer: %d:%d/%d:%d %x", idx, rType, request, val, string(data))
 	dataSlice := (*reflect.SliceHeader)(unsafe.Pointer(&data))
